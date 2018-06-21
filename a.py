@@ -180,7 +180,7 @@ model.compile(loss='categorical_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
 #训练
-model.fit(x=X_train_seq, y=train_labels, epochs=20, batch_size=128,verbose=1,validation_split=0.1)
+model.fit(x=X_train_seq, y=train_labels, epochs=20, batch_size=128,verbose=1)
 #预测
 y_predict = model.predict(X_test_seq)
 
@@ -188,6 +188,14 @@ y_predict_label = label2tag(predictions=y_predict, labelset=label_set)
 
 print(sum([y_predict_label[i] == y_test[i] for i in range(len(y_predict))]) / len(y_predict))
 
+#导入自己的测试集
+test_data=pd.read_csv("xiaomi.csv")
+x = test_data['comment']
+X_cut = cut_texts(texts=x, need_cut=True, word_len=2, savepath=None)
+X_seq = text2seq(texts_cut=X_cut,num_words=500, maxlen=20, batchsize=10000)
+X_seq = np.array(X_seq)
+y_predict = model.predict(X_seq)
+y_predict_label = label2tag(predictions=y_predict, labelset=label_set)
 #Series转成dateframe
 out_x=X_test.to_frame(name=None)
 out_y=DataFrame(y_predict_label)
