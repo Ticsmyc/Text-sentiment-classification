@@ -34,7 +34,7 @@ def cut_texts(texts=None, need_cut=True, word_len=1, savepath=None):
             json.dump(texts_cut, f)
     return texts_cut
 
-def text2seq(texts_cut=None,num_words=2000, maxlen=30, batchsize=10000,tokenizer=None):
+def text2seq(texts_cut=None,num_words=2000, maxlen=30, batchsize=10000):
     '''
     文本转序列，用于神经网络的ebedding层输入。训练集过大全部转换会内存溢出，每次放10000个样本
     :param texts_cut: 分词后的文本列表
@@ -46,7 +46,18 @@ def text2seq(texts_cut=None,num_words=2000, maxlen=30, batchsize=10000,tokenizer
     :return:sequence list
     eg. ata_transform.text2seq(texts_cut=train_fact_cut,num_words=2000, maxlen=500)
     '''
-
+    texts_cut_len = len(texts_cut)
+    #分词器，限制为待处理数据集中最常见的num_words个单词
+    tokenizer = Tokenizer(num_words=num_words)
+    n = 0
+    # 分批训练
+    while n < texts_cut_len:
+        tokenizer.fit_on_texts(texts=texts_cut[n:n + batchsize])
+        n += batchsize
+        if n < texts_cut_len:
+            print('tokenizer finish fit %d samples' % n)
+        else:
+            print('tokenizer finish fit %d samples' % texts_cut_len)
     # 全部转为数字序列
     fact_seq = tokenizer.texts_to_sequences(texts=texts_cut)
     print('finish texts to sequences')
@@ -148,33 +159,20 @@ def label2tag( predictions, labelset):
 #导入数据并分割。
 data=pd.read_csv("data_single.csv")
 x = data['evaluation']
-X_cut= cut_texts(texts=x, need_cut=True, word_len=2, savepath=None)
 y = [[i] for i in data['label']]
-X_train_cut, X_test_cut, y_train, y_test = train_test_split(X_cut, y, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 jieba.setLogLevel('WARN')
+
 # 分词并转成序列再转成向量
-tokenizer = Tokenizer(num_words=500)
-texts_cut_len = len(X_cut)
-#分词器，限制为待处理数据集中最常见的num_words个单词
-n = 0
-batchsize=10000
-# 分批训练
-while n < texts_cut_len:
-    tokenizer.fit_on_texts(texts=X_cut[n:n + batchsize])
-    n += batchsize
-    if n < texts_cut_len:
-        print('tokenizer finish fit %d samples' % n)
-    else:
-        print('tokenizer finish fit %d samples' % texts_cut_len)
 #训练集
-#X_train_cut = cut_texts(texts=X_train, need_cut=True, word_len=2, savepath=None)
-X_train_seq = text2seq(texts_cut=X_train_cut,num_words=500, maxlen=20, batchsize=10000,tokenizer=tokenizer)
-#X_train_seq = text2vec(texts_cut=X_train_cut)
+X_train_cut = cut_texts(texts=X_train, need_cut=True, word_len=2, savepath=None)
+#X_train_seq = text2seq(texts_cut=X_train_cut,num_words=500, maxlen=20, batchsize=10000)
+X_train_seq = text2vec(texts_cut=X_train_cut)
 X_train_seq = np.array(X_train_seq)
 #测试集
-#X_test_cut = cut_texts(texts=X_test, need_cut=True, word_len=2, savepath=None)
-X_test_seq = text2seq(texts_cut=X_test_cut,num_words=500, maxlen=20, batchsize=10000,tokenizer=tokenizer)
-#X_test_seq = text2vec(texts_cut=X_test_cut)
+X_test_cut = cut_texts(texts=X_test, need_cut=True, word_len=2, savepath=None)
+#X_test_seq = text2seq(texts_cut=X_test_cut,num_words=500, maxlen=20, batchsize=10000)
+X_test_seq = text2vec(texts_cut=X_test_cut)
 X_test_seq = np.array(X_test_seq)
 #标签转成独热码
 label_set = creat_label_set(y_train)
@@ -185,7 +183,7 @@ test_labels = np.array(test_labels)
 
 
 num_words=2000
-maxlen=20
+maxlen=1
 vec_size=128
 output_shape=train_labels.shape[1]
 #构建模型
@@ -197,7 +195,7 @@ word_vec = Embedding(input_dim=num_words+1,
                      name='Embedding')(data_input)
 x = Conv1D(filters=128, kernel_size=[3], strides=1, padding='same', activation='relu')(word_vec)
 x = GlobalMaxPool1D()(x)
-x = Dropout(0.1)(x)
+x = Dropout(0.2)(x)
 x = Dense(500, activation='relu')(x)
 x = Dropout(0.1)(x)
 x = Dense(output_shape, activation='softmax')(x)
@@ -206,7 +204,7 @@ model.compile(loss='categorical_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
 #训练
-model.fit(x=X_train_seq, y=train_labels, epochs=10, batch_size=128,verbose=2,validation_split=0.1)
+model.fit(x=X_train_seq, y=train_labels, epochs=20, batch_size=128,verbose=2,validation_split=0.1)
 #预测
 y_predict = model.predict(X_test_seq)
 
@@ -214,16 +212,16 @@ y_predict_label = label2tag(predictions=y_predict, labelset=label_set)
 
 print(sum([y_predict_label[i] == y_test[i] for i in range(len(y_predict))]) / len(y_predict))
 
-#导入另一个测试集
+#导入自己的测试集
 test_data=pd.read_csv("xiaomi.csv")
 x = test_data['comment']
 X_cut = cut_texts(texts=x, need_cut=True, word_len=2, savepath=None)
-X_seq = text2seq(texts_cut=X_cut,num_words=500, maxlen=20, batchsize=10000,tokenizer=tokenizer)
+X_seq = text2seq(texts_cut=X_cut,num_words=500, maxlen=20, batchsize=10000)
 X_seq = np.array(X_seq)
 y_predict = model.predict(X_seq)
 y_predict_label = label2tag(predictions=y_predict, labelset=label_set)
 #Series转成dateframe
-out_x=x.to_frame(name=None)
+out_x=X_test.to_frame(name=None)
 out_y=DataFrame(y_predict_label)
 out_x.to_csv('x.csv')
 out_y.to_csv('y.csv')

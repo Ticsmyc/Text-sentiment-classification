@@ -3,8 +3,8 @@ import requests
 import re
 # 创建循环链接
 urls = []
-for i in list(range(200,500)):
-    urls.append('https://rate.tmall.com/list_detail_rate.htm?itemId=555782135768&spuId=862013696&sellerId=1714128138&order=3&currentPage=%s' %i)
+for i in list(range(1,100)):
+    urls.append('https://rate.tmall.com/list_detail_rate.htm?itemId=560135062971&spuId=889297741&sellerId=1714128138&order=3&currentPage=%s' %i)
 
 # 构建字段容器
 nickname = []
@@ -24,7 +24,7 @@ for url in urls:
     i=i+1
 # 写入数据
 
-file = open('小米电视4A 评价.csv','w')
+file = open('小米手机5A 评价.csv','w')
 for i in list(range(0,len(nickname))):
     file.write(','.join((nickname[i],color[i],ratecontent[i]))+'\n')
 file.close()
