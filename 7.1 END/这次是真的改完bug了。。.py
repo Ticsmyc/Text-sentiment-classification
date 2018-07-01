@@ -8,14 +8,15 @@ from keras.preprocessing.sequence import pad_sequences
 from gensim.models import word2vec
 from keras.models import Model
 from keras.layers import Dense, Embedding, Input
-from keras.layers import Conv1D, GlobalMaxPool1D, Dropout
+from keras.layers import Conv1D, GlobalMaxPool1D, Dropout, MaxPooling1D
 from gensim.models import word2vec
 import jieba
 from pandas.core.frame import DataFrame
+from keras.models import Sequential
+from keras.layers import Merge
 
 
-
-def cut_texts(texts=None, need_cut=True, word_len=1, savepath=None):
+def cut_texts(texts=None, word_len=1, savepath=None):
     #分词
     texts_cut=[]
     if word_len > 1:
@@ -44,9 +45,9 @@ def text2seq(texts_cut=None, maxlen=30,tokenizer=None):
     fact_seq = tokenizer.texts_to_sequences(texts=texts_cut)
     print('finish texts to sequences')
     fact_pad_seq = []
-    # pad_sequences,将每一条评论都填充（pad）到一个矩阵中。 最大长度30，结尾补0
+    # pad_sequences,将每一条评论都填充（pad）到一个矩阵中。 最大长度30，超出长度从前面截断。结尾补0。
     fact_pad_seq += list(pad_sequences(fact_seq, maxlen=maxlen,
-        padding='post', value=0, dtype='int'))
+        padding='post', truncating='pre', value=0, dtype='int'))
     return fact_pad_seq
 
 
@@ -56,22 +57,14 @@ def text2seq(texts_cut=None, maxlen=30,tokenizer=None):
 def label2tag( predictions,y):
     label_set = []
     for i in y:
-        label_set += i
+        label_set.append(i)
     label_set=np.array(list(set(label_set)))
 
-    labels1 =[]
-    labels2 =[]
     labels = []
     for prediction in predictions:
         label = label_set[prediction == prediction.max()]
-        labels1.append(label.tolist())   
-        label = label_set[prediction > 0.5]
-        labels2.append(label.tolist())       
-    for i in range(len(predictions)):
-        if len(labels2[i]) == 0:
-            labels.append(labels1[i])
-        else:
-            labels.append(labels2[i])
+        labels.append(label.tolist())
+
     return labels
 
 #导入数据
@@ -79,7 +72,7 @@ data=pd.read_csv("data_single.csv")
 x = data['evaluation']
 y=data['label']
 #分词
-X_cut= cut_texts(texts=x, need_cut=True, word_len=2,savepath='fenci.csv')
+X_cut= cut_texts(texts=x, word_len=2,savepath='fenci.csv')
 
 # 对文本中的词进行统计计数，生成文档词典，以支持基于词典位序生成文本的向量表示。
 tokenizer = Tokenizer(num_words=500)
@@ -109,8 +102,7 @@ data_input = Input(shape=[maxlen])
 word_vec = Embedding(input_dim=num_words+1,
                      input_length=maxlen,
                      output_dim=vec_size,
-                     mask_zero=0,
-                     name='Embedding')(data_input)
+                     mask_zero=0)(data_input)
 x = Conv1D(filters=128, kernel_size=[3], strides=1, padding='same', activation='relu')(word_vec)
 x = GlobalMaxPool1D()(x)
 x = Dropout(0.1)(x)
@@ -130,7 +122,8 @@ y_predict = model.predict(X_test)
 #转换预测结果
 y_predict_label = label2tag(predictions=y_predict, y=y)
 #统计正确率
-print(sum([y_predict_label[i] == y_test[i] for i in range(len(y_predict))]) / len(y_predict))
+Y_test=label2tag(predictions=y_test,y=y)
+print(sum([y_predict_label[i] == Y_test[i] for i in range(len(y_predict))]) / len(y_predict))
 
 #导入另一个测试集进行预测，并导出结果
 filename='xiaomi5a.csv'

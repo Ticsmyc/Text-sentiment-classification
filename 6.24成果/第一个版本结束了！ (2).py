@@ -8,12 +8,11 @@ from keras.preprocessing.sequence import pad_sequences
 from gensim.models import word2vec
 from keras.models import Model
 from keras.layers import Dense, Embedding, Input
-from keras.layers import Conv1D, GlobalMaxPool1D, Dropout, MaxPooling1D
+from keras.layers import Conv1D, GlobalMaxPool1D, Dropout
 from gensim.models import word2vec
 import jieba
 from pandas.core.frame import DataFrame
-from keras.models import Sequential
-from keras.layers import Merge
+
 
 
 def cut_texts(texts=None, word_len=1, savepath=None):
@@ -45,9 +44,9 @@ def text2seq(texts_cut=None, maxlen=30,tokenizer=None):
     fact_seq = tokenizer.texts_to_sequences(texts=texts_cut)
     print('finish texts to sequences')
     fact_pad_seq = []
-    # pad_sequences,将每一条评论都填充（pad）到一个矩阵中。 最大长度30，超出长度从前面截断。结尾补0。
+    # pad_sequences,将每一条评论都填充（pad）到一个矩阵中。 最大长度30，结尾补0
     fact_pad_seq += list(pad_sequences(fact_seq, maxlen=maxlen,
-        padding='post', truncating='pre', value=0, dtype='int'))
+        padding='post', value=0, dtype='int'))
     return fact_pad_seq
 
 
@@ -102,7 +101,8 @@ data_input = Input(shape=[maxlen])
 word_vec = Embedding(input_dim=num_words+1,
                      input_length=maxlen,
                      output_dim=vec_size,
-                     mask_zero=0)(data_input)
+                     mask_zero=0,
+                     name='Embedding')(data_input)
 x = Conv1D(filters=128, kernel_size=[3], strides=1, padding='same', activation='relu')(word_vec)
 x = GlobalMaxPool1D()(x)
 x = Dropout(0.1)(x)
