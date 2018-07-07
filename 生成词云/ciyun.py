@@ -13,7 +13,7 @@ d=path.dirname('.')
 
 stopwords={}
 isCN=0 # 是否需要分词
-back_coloring_path = "img.jpg" #设置背景图片路径
+back_coloring_path = "img2.jpg" #设置背景图片路径
 text_path="ciyun.txt" #设置要分析的文本路径
 font_path= 'STXINWEI.TTF' #中文字体路径
 imgname1 = 'WordCloudDefautColors.png' #保存图片1 ，只按照背景图片形状
