@@ -16,9 +16,10 @@ from keras.models import Sequential
 from keras.layers import Merge
 
 
-def cut_texts(texts=None, word_len=1, savepath=None):
+def cut_texts(texts=None, word_len=1, savename=None):
     #分词
     texts_cut=[]
+    text_one=[]
     if word_len > 1:
         for text in texts:
             text_cut=[]
@@ -26,17 +27,16 @@ def cut_texts(texts=None, word_len=1, savepath=None):
             for word in words:
                 if len(word)>=word_len:
                     text_cut.append(word)
+                    text_one.append(word)
             texts_cut.append(text_cut)
     else:
         for text in texts:
             words=jieba.lcut(text)
             texts_cut.append(words)
-    if savepath is not None:
-#python3的json在做dumps时，会把中文转成unicode编码，以16进制存储。读取时，再将unicode编码转回中文。
-#        with open(savepath, 'w') as f:
-#             json.dump(texts_cut, f)
-        out_put=DataFrame(texts_cut)
-        out_put.to_csv('fenci.csv')
+    if savename is not None:
+        file=open(savename,'w')
+        file.write(' '.join(text_one))
+        file.close()
     return texts_cut
 
 
@@ -72,7 +72,7 @@ data=pd.read_csv("data_single.csv")
 x = data['evaluation']
 y=data['label']
 #分词
-X_cut= cut_texts(texts=x, word_len=2,savepath='fenci.csv')
+X_cut= cut_texts(texts=x, word_len=2,savename='ciyun.txt')
 
 # 对文本中的词进行统计计数，生成文档词典，以支持基于词典位序生成文本的向量表示。
 tokenizer = Tokenizer(num_words=500)
