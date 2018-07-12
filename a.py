@@ -49,8 +49,6 @@ def text2seq(texts_cut=None, maxlen=30,tokenizer=None):
 
 
 
-
-
 def label2tag( predictions,y):
     label_set = []
     for i in y:

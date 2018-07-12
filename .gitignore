@@ -98,3 +98,7 @@ ENV/
 # mypy
 .mypy_cache/
 sgns.weibo.word
+word2vec_model
+word2vec_model.vectors.npy
+word2vec_model
+word2vec_model.vectors.npy

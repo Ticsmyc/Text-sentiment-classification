@@ -74,19 +74,16 @@ del X_cut_n
 del y
 
 
-new_model=word2vec.load(r'C:\Users\liu01\Desktop\sgns.weibo.word')
 # texts to word vector、
 model_word2vec = word2vec.Word2Vec(X_cut, sg=1, size=128, window=5, min_count=1)
 x_word_vec = text2vec(texts_cut=X_cut,model_word2vec=model_word2vec, sg=1, size=20, window=5, min_count=1)
 # texts vector
 #x_vec = np.array([sum(i) / len(i) for i in x_word_vec])
 X_train, X_test, y_train, y_test = train_test_split(x_word_vec, label, test_size=0.2,random_state=1)
-X_train=X_train.reshape(-1,1)
-X_test=X_test.reshape(-1,1)
 
 model = SVC(C=1)
 model.fit(X=X_train,y=y_train,)
 y_predict  = model.predict(X_test)
 
-# score 0.8331
+# score 0.789227
 print(sum(y_predict == np.array(y_test)) / len(y_predict))

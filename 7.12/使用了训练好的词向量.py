@@ -51,7 +51,7 @@ del y
 word2vec_loadpath='sgns.weibo.word'
 needSave='False'
 model = gensim.models.KeyedVectors.load_word2vec_format('sgns.weibo.word',binary=False)
-if needSave:
+if needSave:     
     model.save('word2vec_model')
 text_vec = [[model[word] for word in text_cut if word in model] for text_cut in X_cut]
 text=[]
