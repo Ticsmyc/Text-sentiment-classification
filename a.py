@@ -111,7 +111,7 @@ model.compile(loss='categorical_crossentropy',
 model.summary()
 
 #训练
-model.fit(x=X_train, y=y_train, epochs=3, batch_size=128,verbose=2,validation_split=0.1)
+model.fit(x=X_train, y=y_train, epochs=1, batch_size=64,verbose=2,validation_split=0.1)
 #预测
 y_predict = model.predict(X_test)
 #转换预测结果

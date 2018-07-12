@@ -66,9 +66,13 @@ text=np.array(text)
 X_train, X_test, y_train, y_test = train_test_split(text, labels, test_size=0.2,random_state=1)
 
 #构造SVC模型
-model = SVC(C=1)
+model = SVC(C=10,kernel='linear',)
 model.fit(X=X_train,y=y_train,)
 y_predict  = model.predict(X_test)
-
-# score 0.819672
+# score 0.819672（C=1）  0.83957(C=2)  0.850117(C=3)  0.862997(C=5)
 print(sum(y_predict == np.array(y_test)) / len(y_predict))
+
+
+
+
+
