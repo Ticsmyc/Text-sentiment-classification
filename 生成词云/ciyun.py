@@ -13,8 +13,8 @@ d=path.dirname('.')
 
 stopwords={}
 isCN=0 # 是否需要分词
-back_coloring_path = "img2.jpg" #设置背景图片路径
-text_path="ciyun.txt" #设置要分析的文本路径
+back_coloring_path = "img.jpg" #设置背景图片路径
+text_path="ciyun_single.txt" #设置要分析的文本路径
 font_path= 'STXINWEI.TTF' #中文字体路径
 imgname1 = 'WordCloudDefautColors.png' #保存图片1 ，只按照背景图片形状
 imgname2= 'WordCloudColorByImg.png' #保存图片名字2 ，颜色按照背景图片颜色布局生成
@@ -25,14 +25,15 @@ back_coloring=imread(path.join(d,back_coloring_path)) #设置背景图片
 #设置词云属性
 wc= WordCloud(font_path=font_path,
     background_color='white',
-    max_words=1000,
+    max_words=2000,
     mask=back_coloring,
     max_font_size=100,
-    random_state=42,
-    width=600,height=400,margin=2,
+    random_state=30,
+    width=600,height=400,margin=5,
+    relative_scaling=0.5
     )
 
-text=open(path.join(d,text_path)).read()
+text=open(path.join(d,text_path),encoding='utf-8').read()
 
 def jiebaclearText(text):
     myword_list=[]

@@ -1,19 +1,14 @@
-import json
 import pandas as pd
-import os
 import numpy as np
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from gensim.models import word2vec
 from keras.models import Model
 from keras.layers import Dense, Embedding, Input
-from keras.layers import Conv1D, GlobalMaxPool1D, Dropout, MaxPooling1D
-from gensim.models import word2vec
+from keras.layers import Conv1D, GlobalMaxPool1D, Dropout
 import jieba
 from pandas.core.frame import DataFrame
-from keras.models import Sequential
-from keras.layers import Merge
+
 
 
 def cut_texts(texts=None, word_len=1, savename=None):
@@ -32,9 +27,11 @@ def cut_texts(texts=None, word_len=1, savename=None):
     else:
         for text in texts:
             words=jieba.lcut(text)
+            for word in words:
+                text_one.append(word)
             texts_cut.append(words)
     if savename is not None:
-        file=open(savename,'w')
+        file=open(savename,'w',encoding='utf-8')
         file.write(' '.join(text_one))
         file.close()
     return texts_cut

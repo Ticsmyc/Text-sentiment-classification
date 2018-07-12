@@ -14,34 +14,46 @@ import jieba
 from pandas.core.frame import DataFrame
 from keras.models import Sequential
 from keras.layers import Merge
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
+
 
 def cut_texts(texts=None, word_len=1, savename=None):
     #分词
     texts_cut=[]
     text_one=[]
+    stopwords_file = "stop_words2.txt"
+    stop_f = open(stopwords_file,"r",encoding='utf-8')
+    stop_words = list()
+    for line in stop_f.readlines():
+        line = line.strip()
+        if not len(line):
+            continue
+        stop_words.append(line)
+    stop_f.close
+    print('The length of stop words are '+str(len(stop_words)))
     if word_len > 1:
         for text in texts:
             text_cut=[]
-            words=jieba.lcut(text)
+#            words=jieba.lcut(text)
+            words=jieba.cut(text,cut_all=False, HMM=True)
             for word in words:
-                if len(word)>=word_len:
+                if word not in stop_words and len(word)>=word_len:
                     text_cut.append(word)
                     text_one.append(word)
             texts_cut.append(text_cut)
     else:
         for text in texts:
+            text_cut=[]
             words=jieba.lcut(text)
             for word in words:
-                text_one.append(word)
-            texts_cut.append(words)
+                if word not in stop_words:
+                    text_cut.append(word)
+                    text_one.append(word)
+            texts_cut.append(text_cut)
     if savename is not None:
         file=open(savename,'w',encoding='utf-8')
         file.write(' '.join(text_one))
         file.close()
     return texts_cut
-
 
 def text2vec(texts_cut=None, model_word2vec=None,
               word2vec_savepath=None, word2vec_loadpath=None,
@@ -67,36 +79,15 @@ def text2vec(texts_cut=None, model_word2vec=None,
      else:
          return text_vec
 
-def SklearnClf(method='SVM', **param):
-    '''
-    Good performance in small dataset
-    :param method: sklearn model name
-    :param param: sklearn model name param,such as "C","kernel"...
-    :return: sklearn model
-    '''
-    if method == 'SVM':
-        model = SVC(**param)
-    elif method == 'Logistic':
-        model = LogisticRegression(**param)
-    return model
 
 #导入数据
 data=pd.read_csv("data_single.csv")
 x = data['evaluation']
 y = data['label']
-#分词并解决分词后空白list的问题
-X_cut_n= cut_texts(texts=x, word_len=2)
-X_cut=[]
-label=[]
-for i in range(0,len(X_cut_n)):
-    if (len(X_cut_n[i])!=0) :
-        X_cut.append(X_cut_n[i])
-        label.append(y[i])
-del X_cut_n
-del y
+#分词
+X_cut= cut_texts(texts=x, word_len=1)
 
 
-new_model=word2vec.load(r'C:\Users\liu01\Desktop\sgns.weibo.word')
 # texts to word vector、
 model_word2vec = word2vec.Word2Vec(X_cut, sg=1, size=128, window=5, min_count=1)
 x_word_vec = text2vec(texts_cut=X_cut,model_word2vec=model_word2vec, sg=1, size=20, window=5, min_count=1)
@@ -104,13 +95,19 @@ x_word_vec = text2vec(texts_cut=X_cut,model_word2vec=model_word2vec, sg=1, size=
 x_vec = np.array([sum(i) / len(i) for i in x_word_vec])
 
 
-X_train, X_test, y_train, y_test = train_test_split(x_vec, label, test_size=0.2,random_state=1)
-X_train=X_train.reshape(-1,1)
-X_test=X_test.reshape(-1,1)
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2,random_state=1)
 
-model = SklearnClf(method='SVM')
-model.fit(X=X_train,y=y_train,)
-y_predict  = model.predict(X_test)
 
+
+
+model = TextClassification()
+# use process
+model.fit(x=X_train,
+          y=y_train,
+          x_need_preprocess=True,
+          y_need_preprocess=False,
+          method='SVM', output_type='single')
+
+y_predict = model.predict(x=X_test, x_need_preprocess=True)
 # score 0.8331
 print(sum(y_predict == np.array(y_test)) / len(y_predict))
