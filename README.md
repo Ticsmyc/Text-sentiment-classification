@@ -52,11 +52,11 @@ for url in urls:
 
 正面：
 
-![](C:\Users\liu01\Desktop\Text sentiment classification\截图\数据集标注_正面.jpg)
+![正面评论](C:\Users\liu01\Desktop\Text sentiment classification\截图\数据集标注_正面.jpg)
 
 负面：
 
-![](C:\Users\liu01\Desktop\Text sentiment classification\截图\数据集标注_负面.jpg)
+![负面评论](C:\Users\liu01\Desktop\Text sentiment classification\截图\数据集标注_负面.jpg)
 
 ### 分词	
 
@@ -64,25 +64,25 @@ for url in urls:
 
 ​	使用"jieba分词"实现:     ```words=jieba.lcut(text)```
 
-####分词结果
+#### 分词结果
 
 ​	使用基于wordcloud生成的词云表示分词结果：
 
 ​	![词云](C:\Users\liu01\Desktop\Text sentiment classification\截图\词云效果2.png)
 
-####关于最小词长的讨论
+#### 关于最小词长的讨论
 
 最小词长为1时的词频：
 
-![](C:\Users\liu01\Desktop\Text sentiment classification\截图\分词为1时的词频排序.jpg)
+![最小词长为1时的词频](C:\Users\liu01\Desktop\Text sentiment classification\截图\分词为1时的词频排序.jpg)
 
 最小词长为2时的词频：
 
-![](C:\Users\liu01\Desktop\Text sentiment classification\截图\分词为2时的词频排序.jpg)
+![最小词长为2时的词频](C:\Users\liu01\Desktop\Text sentiment classification\截图\分词为2时的词频排序.jpg)
 
 ​	由图可见，当最小词长选为1时，高频词出现了大量的标点符号、语气词等无关词语。虽然可以通过通用词将其剔除，但是这么做比较复杂，并且需要构建一个庞大的停用词表。可以看到选最小词长为2时，明显可以得到很多表示情感的词，比如像”不错“、”满意“等等，已经满足了需求。所以最终选择的最小词长为2。 
 
-###卷积神经网络
+### 卷积神经网络
 
 代码见  CNN.py
 
@@ -156,7 +156,7 @@ print(sum([y_predict_label[i] == Y_test[i] for i in range(len(y_predict))]) / le
 
 
 
-###支持向量机
+### 支持向量机
 
 代码见 SVM.py
 
@@ -197,7 +197,7 @@ print(sum(y_predict == np.array(y_test)) / len(y_predict))
 
 
 
-###准确率比较
+### 准确率比较
 
 | 数据量 | 卷积神经网络 | 支持向量机 |
 | :----: | :----------: | :--------: |
@@ -212,7 +212,7 @@ print(sum(y_predict == np.array(y_test)) / len(y_predict))
 |  3000  |    0.901     |   0.875    |
 |  4000  |    0.9175    |   0.886    |
 
-![](C:\Users\liu01\Desktop\Text sentiment classification\截图\结果.jpg)
+![折线图](C:\Users\liu01\Desktop\Text sentiment classification\截图\结果.jpg)
 
 ​	可以看出，卷积神经网络随着数据量的增加，正确率也是不断地提高，最后收敛在0.90左右。而支持向量机的正确率却是经历了先减小后增大的过程。 说明对于卷积神经网络，用于训练的数据量越大，效果越好。而对于支持向量机，更重要的可能是参数的设置。
 
