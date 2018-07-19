@@ -1,12 +1,24 @@
-## 6月20日 
 
-现在是2018年6月20日17:14:58，
 
-经过老师同意，正式开始项目。我把它命名为Test sentiment classification （“文本情感分类”）。 
+# 基于卷积神经网络的文本情感分类
 
-预计使用
+> 注：上述题目是网上申请时提交的题目。后来加以引申，最终项目准确的名称应该是 “实现基于卷积神经网络和支持向量机的文本情感分类，并讨论数据量对这两种方式准确率的影响。”
 
-``` 
+[TOC]
+
+## 内容
+
+1、通过网络爬虫从淘宝、京东爬取商品评论，对其进行人工分类、标注，得到数据集。
+
+2、对数据集进行预处理，进行中文分词、去除停用词，标点符号。
+
+3、分别使用 “卷积神经网络” 和 “支持向量机” 进行训练和预测，计算准确率。
+
+4、改变用于训练的数据量大小，比较这两种方式下的准确率变化情况。
+
+## 依赖库
+
+```
 python=3.6
 pandas=0.22.0
 numpy=1.14.0
@@ -19,195 +31,190 @@ wordcloud=1.4.1
 
 
 
-- 当前进展 ： 完成jieba（用于分词），gensim（用于生成词向量）的安装。（其他包之前已经安装过了）
-- 基本规划：
-   1. 首先完成数据爬取和数据导入部分的代码。初步计划“豆瓣影评”+“淘宝评论”
-    2. 完成文本预处理，包括分词、编码、统一长度
-    3. 模型训练、预测。
-    4. 全程截图+PPT制作。
+## 具体实现
 
+### 构建数据集
 
+1、 原始数据爬取
 
-现在是2018年6月21日00:54:44
+​	创建商品评论页面的循环链接，使用Python的requests库循环抓取数据，使用正则表达式匹配查询，得到相关文本，将结果保存为.csv文档。
 
-- 已经实现了
-  1. 天猫评论的抓取。 （是否需要人为判断正面反面？）
-  2. 豆瓣短评还需努力
-  3. 一个精简的dome即将完成。
-
-
-
-## 6月21日
-
-现在是2018年6月21日16:42:38
-
-遇到了第一个问题
-
-- 'utf-8' codec can't decode byte 0xb6 in position 5: invalid start byte
-  - 在试图用pandas读取爬取到的《数学之美》的评论时，遇到了编码问题。
-    - 使用notepad++打开，将其编码转为UTF-8即可正常使用
-- 还有很多问题...但至少完成了一个能运行的代码
-- 详情见文件夹 “6.21”
-
-
-## 6月22日
-
-- 第一件事
-
-解决了一个重大BUG ！ 正确率飙升
-
-事情是这样的：
-
-```
-在文本转序列的函数中用到了 from keras.preprocessing.text import Tokenizer 这个东西。
-但一直不理解它的运行原理，所以把tokenizer的初始化写在函数内部
-导致每次调用函数都会重新初始化tokenizer，之前生成的文档词典就被替换了。所以导致准确率一直上不去！
-函数作用域都白学了。。。
-目前准确率 92%
+```python
+for url in urls:
+    content = requests.get(url).text
+# 借助正则表达式使用findall进行匹配查询
+    nickname.extend(re.findall('"displayUserNick":"(.*?)"',content)) #用户名
+    ratecontent.extend(re.findall(re.compile('"rateContent":"(.*?)","rateDate"'),content)) #评论内容
+    ratedate.extend(re.findall(re.compile('"rateDate":"(.*?)","reply"'),content)) #评论时间
 ```
 
-- 第二件事 
+2、标注情感
 
-爬取小米手机5A的评论，从电视市场进军手机市场....
+正面：
 
+![](C:\Users\liu01\Desktop\Text sentiment classification\截图\数据集标注_正面.jpg)
 
+负面：
 
-## 6月23日
+![](C:\Users\liu01\Desktop\Text sentiment classification\截图\数据集标注_负面.jpg)
 
-- 第一件事 
+### 分词	
 
-  重写了分词部分一些隐晦难懂的代码（其实是简便写法）。遇到一个问题。在使用json.dump保存分词结果时出现了乱码。正在寻求解决方案。
+​	在英文的行文中，单词之间是以空格作为自然分界符的，而中文只是字、句和段能通过明显的分界符来简单划界，但是词却没有一个形式上的分界符。要获得句子的语义特征，必须对句子进行分词。
 
-  > 【雾】Python 3中的json在做dumps操作时，会将中文转换成unicode编码，并以16进制方式存储，再做逆向操作时，会将unicode编码转换回中文
+​	使用"jieba分词"实现:     ```words=jieba.lcut(text)```
 
-  最后将分好的词转成DataFrame格式，然后导出.csv了 ...
+####分词结果
 
-- 第二件事
+​	使用基于wordcloud生成的词云表示分词结果：
 
-  将独热码的生成简化了，使用pd.get_dummies . 但是怎么把转换出来的独热码再转换为原来的标签还是个问题。。。
+​	![词云](C:\Users\liu01\Desktop\Text sentiment classification\截图\词云效果2.png)
 
-- 在爬淘宝的评论时出现一个奇怪的现象，有大量重复的评论。刚才爬了三千多条，去重之后只剩了10条？？？
+####关于最小词长的讨论
 
-## 6月24日
+最小词长为1时的词频：
 
-- 修复一个小bug ，之前没注意，把未分词的文本传到转换序列的函数中。。
-- 完成预测结果与标签的转换（两种方式） 
-- 第一个版本基本完成了。 代码思路很清晰，预测结果也很准确。
+![](C:\Users\liu01\Desktop\Text sentiment classification\截图\分词为1时的词频排序.jpg)
 
-## 7月1日
+最小词长为2时的词频：
 
-### 模型构建部分..
+![](C:\Users\liu01\Desktop\Text sentiment classification\截图\分词为2时的词频排序.jpg)
 
-- Embedding层：
-  - input_dim：大或等于0的整数，字典长度，即输入数据最大下标+1 
-  - output_dim：大于0的整数，代表全连接嵌入的维度 。 设为128维
-  - embeddings_initializer: 嵌入矩阵的初始化方法，为预定义初始化方法名的字符串，或用于初始化权重的初始化器。参考initializers 。 默认。
-  - mask_zero：布尔值，确定是否将输入中的‘0’看作是应该被忽略的‘填充’（padding）值，该参数在使用递归层处理变长输入时有用。设置为True的话，模型中后续的层必须都支持masking，否则会抛出异常。如果该值为True，则下标0在字典中不可用，input_dim应设置为|vocabulary| + 2。
-    - 本应设为true。 但是因为 "Layer conv1d_11 does not support masking, but was passed an input_mask: Tensor("Embedding_10/NotEqual:0", shape=(?, 20), dtype=bool)"  所以为false 
-  - input_length：当输入序列的长度固定时，该值为其长度。如果要在该层后接Flatten层，然后接Dense层，则必须指定该参数，否则Dense层的输出维度无法自动推断。 为20.
-  - 注： 
-  - 1. 卷积神经网络不需要语义特征，所以没有使用训练好的词向量权重。
-    2. 该层作用：**嵌入层将正整数（下标）转换为具有固定大小的向量** 。 即对每句话分好的20个词的序列，生成一个 20*128的矩阵送入卷积层。
-- Conv1D层
-  - filters：卷积核的数目（即输出的维度）
-  - kernel_size：整数或由单个整数构成的list/tuple，卷积核的空域或时域窗长度
-  - strides：整数或由单个整数构成的list/tuple，为卷积的步长。任何不为1的strides均与任何不为1的dilation_rate均不兼容
-  - padding：补0策略，为“valid”, “same” 或“causal”，“causal”将产生因果（膨胀的）卷积，即output[t]不依赖于input[t+1：]。当对不能违反时间顺序的时序信号建模时有用。参考[WaveNet: A Generative Model for Raw Audio, section 2.1.](https://arxiv.org/abs/1609.03499)。“valid”代表只进行有效的卷积，即对边界数据不处理。“same”代表保留边界处的卷积结果，通常会导致输出shape与输入shape相同。
-- GlobalMaxPool1D
-  - 对input进行采样，降低input的维度，减少了参数（简化了计算），增强了模型的泛化能力，也降低了overfitting的可能性。
-- Dense
-  - 全连接层。
-- Dropout
-  - Dropout将在训练过程中每次更新参数时按一定概率（rate）随机断开输入神经元，Dropout层用于防止过拟合。
-- complile 
-  - optimizer：优化器，为预定义优化器名或优化器对象，参考[优化器](http://keras-cn.readthedocs.io/en/latest/other/optimizers/)
-  - loss：损失函数，为预定义损失函数名或一个目标函数，参考[损失函数](http://keras-cn.readthedocs.io/en/latest/other/objectives/)
-  - metrics：列表，包含评估模型在训练和测试时的性能的指标，典型用法是`metrics=['accuracy']`如果要在多输出模型中为不同的输出指定不同的指标，可像该参数传递一个字典，例如`metrics={'ouput_a': 'accuracy'}`
+​	由图可见，当最小词长选为1时，高频词出现了大量的标点符号、语气词等无关词语。虽然可以通过通用词将其剔除，但是这么做比较复杂，并且需要构建一个庞大的停用词表。可以看到选最小词长为2时，明显可以得到很多表示情感的词，比如像”不错“、”满意“等等，已经满足了需求。所以最终选择的最小词长为2。 
 
-### 支持向量机部分
+###卷积神经网络
 
-- 分词之后会出现空白list，将其清除。
+代码见  CNN.py
 
+流程： 导入数据 -> 数据预处理（分词，统计词频、编号，标签转成独热码） -> 构建模型 -> 训练和预测 -> 计算准确率
 
+#### 数据预处理部分
 
+1、分词（同上）
 
-## 7月7日
+2、统计词频、编码
 
-> 七月七日晴 
+​	使用Keras的Tokenizer类 对文本中的词进行统计计数，生成文档词典，以支持基于词典位序生成文本的向量表示。
 
-今天把心心念念很久的词云写好了。具体功能是这样的：
+````python
+tokenizer = Tokenizer(num_words=2000) #初始化Tokenizer
+tokenizer.fit_on_texts(texts=X_cut) #训练
+counts=tokenizer.word_counts #词频
+index=tokenizer.word_index #编号
+````
 
-把分词结果以空格间隔开，然后组成一个长长地字符串，然后导出txt 。再用生成词云的程序导入，用wordcloud生成词云，并且添加背景颜色。 效果很好看！
+> 注：在Keras官方文档中，Tokenizer被翻译成“分词器”，这个翻译其实不太恰当。它实现的功能并不是分词，而是统计词频，并且可以根据词频从高到低对词语依次编码为1,2,3……。
 
-- 犯蠢： github的undo真的不能随便点啊！！！
+3、标签转成独热码
+
+​	使用Pandas的get_dummies方法实现。
+
+```python
+y_one_hot = pd.get_dummies(y)
+y_one_hot_labels = np.asarray(y_one_hot)
+```
 
 
 
+#### 模型构建部分
 
-## 7月11日
-
-支持向量机时，发现如果设置分词的最小词长为2，会出现大量的空白list，（比如 “挺好的” 分词居然没有结果....）  尝试了很久怎么去掉其中的空白项。 因为要同时去掉X_cut和y中的同一个下标的项，
-
-- 解决历程
-
-  - 无效方法
-
-    - 试图在原来list基础上，直接找到空白list的下标然后pop，通过i-=1来补救...然后发现下标经常越界，并且如果有两个连在一起的空白，只能删掉其中一个。
-
-    - ```
-      for i in range(0,len(X_cut_n)):
-          if (len(X_cut_n[i])==0) :
-              X_cut.pop(i)
-              y.pop(i)
-              i-=1
-      ```
-
-  - 有效方法1
-
-    - 使用最小词长1，再加上去掉停词。 但是分词效果不太好，长文本size已经达到300多，如果用SVM进行计算，效率太低。
-
-    - ```
-      文件 '整理停用词.py'
-      修改了 cut_texts 方法
-      ```
-
-  - 有效方法2 
-
-    - 既然能得到原来的list中空list的下标，那再拷贝一份，跳过这几个下标不就好了吗？！？？？？
-
-    - 我是傻子吗？？？
-
-    - 这样操作，分词之后list最大的也就202，普遍在120以下，使用长度128的词向量绰绰有余。！
-
-    - ``` 
-      #分词并解决分词后空白list的问题
-      X_cut_n= cut_texts(texts=x, word_len=2)
-      X_cut=[]
-      label=[]
-      for i in range(0,len(X_cut_n)):
-          if (len(X_cut_n[i])!=0) :
-              X_cut.append(X_cut_n[i])
-              label.append(y[i])
-      ```
-
-
-好的！现在支持向量机版本已经可以跑了。。就是分类有点问题，都分成了同一类。我猜测应该是词向量的问题。
+```python
+data_input = Input(shape=[maxlen])
+word_vec = Embedding(input_dim=num_words+1,
+                     input_length=maxlen,
+                     output_dim=vec_size,
+                     mask_zero=0)(data_input)
+x = Conv1D(filters=128, kernel_size=[3], strides=1, padding='same', activation='relu')(word_vec)
+x = GlobalMaxPool1D()(x)
+x = Dropout(0.1)(x)
+x = Dense(500, activation='relu')(x)
+x = Dropout(0.1)(x)
+x = Dense(output_shape, activation='softmax')(x)
+model = Model(inputs=data_input, outputs=x)
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+model.summary()
+```
 
 
 
-## 7.12
+#### 训练和预测部分
 
-第一件事：
+```python
+#训练
+model.fit(x=X_train, y=y_train, epochs=3, batch_size=64,verbose=2)
+#预测
+y_predict = model.predict(X_test)
+#转换预测结果
+y_predict_label = label2tag(predictions=y_predict, y=y)
+#统计正确率
+Y_test=label2tag(predictions=y_test,y=y)
+print(sum([y_predict_label[i] == Y_test[i] for i in range(len(y_predict))]) / len(y_predict))
 
-​	把text2vec中的merge去掉了，就用128维的数据进行fit，成功提高分类准确率，达到78.xx% 。
+```
 
-第二件事：
 
-​	使用了下载的别人构造的词向量构建word2vec模型，将分词结果转为300维数据，之后进行了合并，准确率可以达到82%
 
-第三件事：
+###支持向量机
 
-​	修改 ```model = SVC(C=10,kernel='linear',) ```， 使用线性核函数，惩罚系数取10. 正确率可达87.9%。 
+代码见 SVM.py
 
-​	已经很接近CNN的90.89%了。  我觉得可以就此收手了。。。。
+流程： 导入数据 -> 数据预处理（分词，词语转为词向量） -> 构建模型 -> 训练和预测 -> 计算准确率
+
+#### 数据预处理部分
+
+1、分词，同上
+
+2、词向量生成
+
+​	使用中文词向量语料库（Shen Li, Zhe Zhao, Renfen Hu, Wensi Li, Tao Liu, Xiaoyong Du, [*Analogical Reasoning on Chinese Morphological and Semantic Relations*](http://aclweb.org/anthology/P18-2023), ACL 2018.）中的中文预训练词向量（sgns.weibo.word）对分词结果进行转换。
+
+```python
+model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_loadpath,binary=False)
+text_vec = [[model[word] for word in text_cut if word in model] for text_cut in X_cut]
+```
+
+
+
+#### 模型构建部分
+
+```python
+model_svc = SVC(C=10,kernel='linear',)
+#C似乎越大准确率越高： score 0.819672（C=1）  0.83957(C=2)  0.850117(C=3)  0.862997(C=5)
+#尝试了所有的kernel，最后linear的准确率最高。
+```
+
+
+
+#### 训练和预测部分
+
+```python
+model_svc.fit(X=X_train,y=y_train,)
+y_predict  = model_svc.predict(X_test)
+print(sum(y_predict == np.array(y_test)) / len(y_predict))
+```
+
+
+
+###准确率比较
+
+| 数据量 | 卷积神经网络 | 支持向量机 |
+| :----: | :----------: | :--------: |
+|   50   |    0.500     |   0.900    |
+|  100   |    0.550     |   0.900    |
+|  200   |    0.650     |   0.900    |
+|  300   |    0.733     |   0.883    |
+|  400   |    0.825     |   0.763    |
+|  500   |    0.850     |   0.820    |
+|  1000  |    0.875     |   0.844    |
+|  2000  |    0.900     |   0.869    |
+|  3000  |    0.901     |   0.875    |
+|  4000  |    0.9175    |   0.886    |
+
+![](C:\Users\liu01\Desktop\Text sentiment classification\截图\结果.jpg)
+
+​	可以看出，卷积神经网络随着数据量的增加，正确率也是不断地提高，最后收敛在0.90左右。而支持向量机的正确率却是经历了先减小后增大的过程。 说明对于卷积神经网络，用于训练的数据量越大，效果越好。而对于支持向量机，更重要的可能是参数的设置。
+
+
 
