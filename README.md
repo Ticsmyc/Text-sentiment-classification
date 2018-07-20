@@ -6,6 +6,8 @@
 
 [TOC]
 
+-----------------------
+
 ## 内容
 
 1、通过网络爬虫从淘宝、京东爬取商品评论，对其进行人工分类、标注，得到数据集。
@@ -15,6 +17,8 @@
 3、分别使用 “卷积神经网络” 和 “支持向量机” 进行训练和预测，计算准确率。
 
 4、改变用于训练的数据量大小，比较这两种方式下的准确率变化情况。
+
+----------------------
 
 ## 依赖库
 
@@ -29,7 +33,7 @@ keras=2.1.5
 wordcloud=1.4.1
 ```
 
-
+----------------------------
 
 ## 具体实现
 
@@ -68,19 +72,36 @@ for url in urls:
 
 ​	使用基于wordcloud生成的词云表示分词结果：
 
+```python
+wc= WordCloud(font_path=font_path,
+    background_color='white',
+    max_words=2000,
+    mask=back_coloring,
+    max_font_size=100,
+    random_state=30,
+    width=600,height=400,margin=5,
+    relative_scaling=0.5
+    )
+wc.generate(text)
+```
+
+
+
 ​	![词云](C:\Users\liu01\Desktop\Text sentiment classification\截图\词云效果2.png)
 
 #### 关于最小词长的讨论
 
 最小词长为1时的词频：
 
-![最小词长为1时的词频](C:\Users\liu01\Desktop\Text sentiment classification\截图\分词为1时的词频排序.jpg)
+![](C:\Users\liu01\Desktop\Text sentiment classification\截图\词长为1时的词频.jpg)
 
 最小词长为2时的词频：
 
-![最小词长为2时的词频](C:\Users\liu01\Desktop\Text sentiment classification\截图\分词为2时的词频排序.jpg)
+![](C:\Users\liu01\Desktop\Text sentiment classification\截图\词长为2时的词频.jpg)
 
-​	由图可见，当最小词长选为1时，高频词出现了大量的标点符号、语气词等无关词语。虽然可以通过通用词将其剔除，但是这么做比较复杂，并且需要构建一个庞大的停用词表。可以看到选最小词长为2时，明显可以得到很多表示情感的词，比如像”不错“、”满意“等等，已经满足了需求。所以最终选择的最小词长为2。 
+​	由图可见，当最小词长选为1时，高频词出现了大量的标点符号、语气词等无关词语。虽然可以通过通用词将其剔除，但是这么做比较复杂，并且需要构建一个庞大的停用词表。选最小词长为2时，在高频词中明显可以看到很多表示情感的词，比如像”不错“、”满意“等等，已经满足了需求。所以最终选择的最小词长为2。 
+
+---------------------------
 
 ### 卷积神经网络
 
