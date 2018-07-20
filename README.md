@@ -18,8 +18,6 @@
 
 4、改变用于训练的数据量大小，比较这两种方式下的准确率变化情况。
 
-----------------------
-
 ## 依赖库
 
 ```
@@ -32,8 +30,6 @@ scikit-learn=0.19.1
 keras=2.1.5
 wordcloud=1.4.1
 ```
-
-----------------------------
 
 ## 具体实现
 
@@ -61,6 +57,10 @@ for url in urls:
 负面：
 
 ![负面评论](C:\Users\liu01\Desktop\Text sentiment classification\截图\数据集标注_负面.jpg)
+
+--------------
+
+
 
 ### 分词	
 
@@ -91,17 +91,19 @@ wc.generate(text)
 
 #### 关于最小词长的讨论
 
-最小词长为1时的词频：
+​	最小词长为1时的词频：
 
 ![](C:\Users\liu01\Desktop\Text sentiment classification\截图\词长为1时的词频.jpg)
 
-最小词长为2时的词频：
+​	最小词长为2时的词频：
 
 ![](C:\Users\liu01\Desktop\Text sentiment classification\截图\词长为2时的词频.jpg)
 
 ​	由图可见，当最小词长选为1时，高频词出现了大量的标点符号、语气词等无关词语。虽然可以通过通用词将其剔除，但是这么做比较复杂，并且需要构建一个庞大的停用词表。选最小词长为2时，在高频词中明显可以看到很多表示情感的词，比如像”不错“、”满意“等等，已经满足了需求。所以最终选择的最小词长为2。 
 
----------------------------
+--------------
+
+
 
 ### 卷积神经网络
 
@@ -135,9 +137,9 @@ y_one_hot = pd.get_dummies(y)
 y_one_hot_labels = np.asarray(y_one_hot)
 ```
 
-
-
 #### 模型构建部分
+
+​	模型来自博文（Implementing a CNN for Text Classification in TensorFlow ：http://www.wildml.com/2015/12/implementing-a-cnn-for-text-classification-in-tensorflow/ ）。因为要做的只是二分类，所以对其模型中平行的三个卷积层进行了简化，只使用一个卷积层。 因为发现过拟合严重，增加了两个Dropout层。
 
 ```python
 data_input = Input(shape=[maxlen])
@@ -158,8 +160,6 @@ model.compile(loss='categorical_crossentropy',
 model.summary()
 ```
 
-
-
 #### 训练和预测部分
 
 ```python
@@ -172,8 +172,9 @@ y_predict_label = label2tag(predictions=y_predict, y=y)
 #统计正确率
 Y_test=label2tag(predictions=y_test,y=y)
 print(sum([y_predict_label[i] == Y_test[i] for i in range(len(y_predict))]) / len(y_predict))
-
 ```
+
+------------------------
 
 
 
@@ -203,7 +204,7 @@ text_vec = [[model[word] for word in text_cut if word in model] for text_cut in 
 ```python
 model_svc = SVC(C=10,kernel='linear',)
 #C似乎越大准确率越高： score 0.819672（C=1）  0.83957(C=2)  0.850117(C=3)  0.862997(C=5)
-#尝试了所有的kernel，最后linear的准确率最高。
+#尝试了所有的kernel，最后得出linear的准确率最高。
 ```
 
 
@@ -236,6 +237,3 @@ print(sum(y_predict == np.array(y_test)) / len(y_predict))
 ![折线图](C:\Users\liu01\Desktop\Text sentiment classification\截图\结果.jpg)
 
 ​	可以看出，卷积神经网络随着数据量的增加，正确率也是不断地提高，最后收敛在0.90左右。而支持向量机的正确率却是经历了先减小后增大的过程。 说明对于卷积神经网络，用于训练的数据量越大，效果越好。而对于支持向量机，更重要的可能是参数的设置。
-
-
-
